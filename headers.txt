@@ -1,0 +1,22 @@
+HTTP/1.1 302 Found
+Date: Tue, 18 Aug 2026 08:18:44 GMT
+Server: Apache/2.4.62 (Win64) OpenSSL/3.0.18 PHP/8.3.28
+X-Powered-By: PHP/8.3.28
+Set-Cookie: PHPSESSID=4ul0v9idairs0g9d6dkjapu50k; path=/
+Expires: Thu, 19 Nov 1981 08:52:00 GMT
+Cache-Control: no-store, no-cache, must-revalidate
+Pragma: no-cache
+Location: /lavalust/student?message=Access+denied.+Please+open+the+student+page+first+to+continue+to+the+profile.
+Content-Length: 0
+Content-Type: text/html; charset=UTF-8
+
+HTTP/1.1 200 OK
+Date: Tue, 18 Aug 2026 08:18:44 GMT
+Server: Apache/2.4.62 (Win64) OpenSSL/3.0.18 PHP/8.3.28
+X-Powered-By: PHP/8.3.28
+Expires: Thu, 19 Nov 1981 08:52:00 GMT
+Cache-Control: no-store, no-cache, must-revalidate
+Pragma: no-cache
+Transfer-Encoding: chunked
+Content-Type: text/html; charset=UTF-8
+

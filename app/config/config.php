@@ -79,7 +79,7 @@ $config['environment'] = getenv('APP_ENV') ?: 'development';
 | WARNING: You MUST set this value!
 |
 */
-$config['base_url'] 				= '';
+$config['base_url'] 				= 'http://127.0.0.1/lavalust/';
 
 /*
 |--------------------------------------------------------------------------
@@ -217,6 +217,8 @@ $config['language'] 				= 'en-US';
 |
 */
 $config['subclass_prefix']          = 'MY_';
+
+require_once APP_DIR . 'config/middleware.php';
 
 /*
 |--------------------------------------------------------------------------

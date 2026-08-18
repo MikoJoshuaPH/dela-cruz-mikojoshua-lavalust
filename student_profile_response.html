@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whoops! &mdash; Error</title>
+    <style nonce="">
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-deep:    #0d0d18;
+            --bg-panel:   #11111e;
+            --bg-surface: #16162a;
+            --bg-hover:   #1c1c2e;
+            --bg-active:  #1e1e36;
+            --border:     #1f1f32;
+            --border-mid: #2a2a42;
+            --text:       #c8c8e0;
+            --text-muted: #55556a;
+            --text-dim:   #44445a;
+            --accent:     #e8513a;
+            --accent-dim: rgba(232, 81, 58, 0.15);
+            --blue:       #3b82f6;
+            --purple:     #a78bfa;
+            --green:      #86efac;
+            --orange:     #fb923c;
+            --pink:       #f472b6;
+            --cyan:       #67e8f9;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            background: var(--bg-deep);
+            color: var(--text);
+            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace;
+            font-size: 13px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── TOP BAR ── */
+        .top-bar {
+            background: var(--accent);
+            color: #fff;
+            padding: 10px 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+            min-height: 46px;
+        }
+        .top-bar .exc-type {
+            background: rgba(0,0,0,.28);
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .6px;
+            white-space: nowrap;
+        }
+        .top-bar .exc-msg {
+            font-family: system-ui, -apple-system, sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            flex: 1;
+            line-height: 1.4;
+        }
+
+        /* ── MAIN LAYOUT ── */
+        .layout {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        /* ── LEFT SIDEBAR ── */
+        .sidebar {
+            width: 360px;
+            min-width: 260px;
+            background: var(--bg-panel);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .sidebar-title {
+            font-size: 10px;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            padding: 10px 16px 9px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .trace-list {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        .trace-list::-webkit-scrollbar { width: 4px; }
+        .trace-list::-webkit-scrollbar-track { background: transparent; }
+        .trace-list::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 2px; }
+
+        .trace-item {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            border-left: 3px solid transparent;
+            transition: background .1s;
+        }
+        .trace-item:hover { background: var(--bg-hover); }
+        .trace-item.active {
+            background: var(--bg-active);
+            border-left-color: var(--accent);
+        }
+        .trace-fn {
+            color: var(--purple);
+            font-size: 12px;
+            margin-bottom: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .trace-item.active .trace-fn { color: #c4b5fd; }
+        .trace-loc {
+            color: var(--text-muted);
+            font-size: 11px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .trace-loc .line-num { color: var(--blue); }
+
+        /* ── RIGHT PANEL ── */
+        .right-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 0;
+            background: var(--bg-deep);
+        }
+
+        .code-header {
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+            padding: 9px 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+        .code-header .file-path {
+            color: #7dd3fc;
+            font-size: 12px;
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .code-header .line-badge {
+            background: var(--accent-dim);
+            color: var(--accent);
+            font-size: 11px;
+            padding: 2px 9px;
+            border-radius: 4px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .code-view {
+            flex: 1;
+            overflow: auto;
+            font-size: 12.5px;
+            line-height: 1.75;
+        }
+        .code-view::-webkit-scrollbar { width: 6px; height: 6px; }
+        .code-view::-webkit-scrollbar-track { background: transparent; }
+        .code-view::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 3px; }
+
+        .code-line {
+            display: flex;
+            align-items: stretch;
+            min-width: max-content;
+        }
+        .code-line:hover { background: rgba(255,255,255,.025); }
+        .code-line.error-line { background: rgba(232,81,58,.12); }
+
+        .ln {
+            width: 52px;
+            text-align: right;
+            padding: 0 16px 0 0;
+            color: var(--text-dim);
+            user-select: none;
+            flex-shrink: 0;
+            font-size: 12px;
+        }
+        .code-line.error-line .ln { color: var(--accent); font-weight: 700; }
+
+        .error-arrow {
+            width: 16px;
+            color: var(--accent);
+            flex-shrink: 0;
+            font-size: 12px;
+        }
+
+        .src {
+            flex: 1;
+            padding-right: 32px;
+            white-space: pre;
+            color: var(--text);
+        }
+        .code-line.error-line .src { color: #fff; }
+
+        /* syntax */
+        .kw  { color: var(--pink); }
+        .str { color: var(--green); }
+        .num { color: var(--orange); }
+        .cmt { color: var(--text-dim); font-style: italic; }
+        .fn  { color: var(--blue); }
+        .var { color: var(--cyan); }
+
+        /* ── ARGS PANEL ── */
+        .args-panel {
+            border-top: 1px solid var(--border);
+            background: var(--bg-panel);
+            flex-shrink: 0;
+            max-height: 160px;
+            overflow: auto;
+        }
+        .args-panel::-webkit-scrollbar { height: 4px; width: 4px; }
+        .args-panel::-webkit-scrollbar-thumb { background: var(--border-mid); }
+        .args-title {
+            font-size: 10px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            padding: 8px 18px 6px;
+            border-bottom: 1px solid var(--border);
+        }
+        .args-body {
+            padding: 10px 18px;
+            font-size: 11.5px;
+            color: #888;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        /* ── INFO TABS ── */
+        .info-section {
+            border-top: 1px solid var(--border);
+            background: var(--bg-panel);
+            flex-shrink: 0;
+        }
+        .tabs-bar {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+        }
+        .tab-btn {
+            padding: 8px 16px;
+            font-size: 10.5px;
+            letter-spacing: .6px;
+            text-transform: uppercase;
+            cursor: pointer;
+            color: var(--text-muted);
+            border-bottom: 2px solid transparent;
+            background: none;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+            font-family: inherit;
+            transition: color .15s;
+        }
+        .tab-btn:hover { color: var(--text); }
+        .tab-btn.active { color: var(--purple); border-bottom-color: var(--purple); }
+
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; }
+
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            max-height: 130px;
+            overflow: auto;
+        }
+        .info-table-wrap {
+            max-height: 130px;
+            overflow: auto;
+            padding: 6px 0;
+        }
+        .info-table-wrap::-webkit-scrollbar { width: 4px; }
+        .info-table-wrap::-webkit-scrollbar-thumb { background: var(--border-mid); }
+        .info-table td {
+            padding: 3px 18px;
+            vertical-align: top;
+        }
+        .info-table td:first-child {
+            color: var(--text-dim);
+            width: 160px;
+            white-space: nowrap;
+        }
+        .info-table td:last-child {
+            color: #9ab4ff;
+            word-break: break-all;
+        }
+        .empty-note {
+            padding: 10px 18px;
+            color: var(--text-dim);
+            font-size: 11.5px;
+        }
+
+        @media (max-width: 700px) {
+            .sidebar { width: 220px; min-width: 160px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+    <span class="exc-type">Error</span>
+    <span class="exc-msg">Call to undefined function redirect()</span>
+</div>
+
+<div class="layout">
+
+    <!-- LEFT SIDEBAR: stack frames -->
+    <div class="sidebar">
+        <div class="sidebar-title">Stack frames</div>
+        <div class="trace-list" id="traceList">
+                        <div class="trace-item active"
+                 data-index="0"
+                 onclick="activateFrame(0)">
+                <div class="trace-fn">
+                                        {main}()
+                </div>
+                <div class="trace-loc">
+                                        app/middlewares/StudentMiddleware.php                                            <span class="line-num">:22</span>
+                                    </div>
+            </div>
+                        <div class="trace-item "
+                 data-index="1"
+                 onclick="activateFrame(1)">
+                <div class="trace-fn">
+                                            StudentMiddleware-&gt;                                        handle()
+                </div>
+                <div class="trace-loc">
+                                        scheme/kernel/Middleware.php                                            <span class="line-num">:99</span>
+                                    </div>
+            </div>
+                        <div class="trace-item "
+                 data-index="2"
+                 onclick="activateFrame(2)">
+                <div class="trace-fn">
+                                            Middleware-&gt;                                        resolve()
+                </div>
+                <div class="trace-loc">
+                                        scheme/kernel/Middleware.php                                            <span class="line-num">:77</span>
+                                    </div>
+            </div>
+                        <div class="trace-item "
+                 data-index="3"
+                 onclick="activateFrame(3)">
+                <div class="trace-fn">
+                                            Middleware-&gt;                                        {closure}()
+                </div>
+                <div class="trace-loc">
+                                        scheme/kernel/Middleware.php                                            <span class="line-num">:83</span>
+                                    </div>
+            </div>
+                        <div class="trace-item "
+                 data-index="4"
+                 onclick="activateFrame(4)">
+                <div class="trace-fn">
+                                            Middleware-&gt;                                        run()
+                </div>
+                <div class="trace-loc">
+                                        scheme/kernel/Router.php                                            <span class="line-num">:412</span>
+                                    </div>
+            </div>
+                        <div class="trace-item "
+                 data-index="5"
+                 onclick="activateFrame(5)">
+                <div class="trace-fn">
+                                            Router-&gt;                                        execute_callback()
+                </div>
+                <div class="trace-loc">
+                                        scheme/kernel/Router.php                                            <span class="line-num">:457</span>
+                                    </div>
+            </div>
+                        <div class="trace-item "
+                 data-index="6"
+                 onclick="activateFrame(6)">
+                <div class="trace-fn">
+                                            Router-&gt;                                        initiate()
+                </div>
+                <div class="trace-loc">
+                                        scheme/kernel/LavaLust.php                                            <span class="line-num">:244</span>
+                                    </div>
+            </div>
+                        <div class="trace-item "
+                 data-index="7"
+                 onclick="activateFrame(7)">
+                <div class="trace-fn">
+                                        require_once()
+                </div>
+                <div class="trace-loc">
+                                        lavalust/public/index.php                                            <span class="line-num">:86</span>
+                                    </div>
+            </div>
+                    </div>
+    </div>
+
+    <!-- RIGHT PANEL: code + info -->
+    <div class="right-panel">
+
+        <!-- CODE HEADER -->
+        <div class="code-header">
+            <span class="file-path" id="codeFilePath">
+                C:\laragon\www\lavalust\app\middlewares\StudentMiddleware.php            </span>
+            <span class="line-badge" id="codeLineBadge">
+                line 22            </span>
+        </div>
+
+        <!-- CODE VIEW -->
+        <div class="code-view" id="codeView">
+                        <div class="code-line "
+                 id="src-line-12">
+                <span class="ln">12</span>
+                <span class="error-arrow">&nbsp;</span>
+                <span class="src" data-raw="    public function handle(Closure $next)"></span>
+            </div>
+                        <div class="code-line "
+                 id="src-line-13">
+                <span class="ln">13</span>
+                <span class="error-arrow">&nbsp;</span>
+                <span class="src" data-raw="    {"></span>
+            </div>
+                        <div class="code-line "
+                 id="src-line-14">
+                <span class="ln">14</span>
+                <span class="error-arrow">&nbsp;</span>
+                <span class="src" data-raw="        if (session_status() === PHP_SESSION_NONE) {"></span>
+            </div>
+                        <div class="code-line "
+                 id="src-line-15">
+                <span class="ln">15</span>
+                <span class="error-arrow">&nbsp;</span>
+                <span class="src" data-raw="            session_start();"></span>
+            </div>
+                        <div class="code-line "
+                 id="src-line-16">
+                <span class="ln">16</span>
+                <span class="error-arrow">&nbsp;</span>
+                <span class="src" data-raw="        }"></span>
+            </div>
+                        <div class="code-line "
+                 id="src-line-17">
+                <span class="ln">17</span>
+                <span class="error-arrow">&nbsp;</span>
+                <span class="src" data-raw=""></span>
+            </div>
+                        <div class="code-line "
+                 id="src-line-18">
+                <span class="ln">18</span>
+                <span class="error-arrow">&nbsp;</span>
+                <span class="src" data-raw="        if (!empty($_SESSION[&#039;student_access&#039;]) &amp;&amp; $_SESSION[&#039;student_access&#039;] === true) {"></span>
+            </div>
+                        <div class="code-line "
+                 id="src-line-19">
+                <span class="ln">19</span>
+                <span class="error-arrow">&nbsp;</span>
+                <span class="src" data-raw="            return $next();"></span>
+            </div>
+                        <div class="code-line "
+                 id="src-line-20">
+                <span class="ln">20</span>
+                <span class="error-arrow">&nbsp;</span>
+                <span class="src" data-raw="        }"></span>
+            </div>
+                        <div class="code-line "
+                 id="src-line-21">
+                <span class="ln">21</span>
+                <span class="error-arrow">&nbsp;</span>
+                <span class="src" data-raw=""></span>
+            </div>
+                        <div class="code-line error-line"
+                 id="src-line-22">
+                <span class="ln">22</span>
+                <span class="error-arrow">&#9654;</span>
+                <span class="src" data-raw="        redirect(&#039;student&#039;);"></span>
+            </div>
+                        <div class="code-line "
+                 id="src-line-23">
+                <span class="ln">23</span>
+                <span class="error-arrow">&nbsp;</span>
+                <span class="src" data-raw="        return;"></span>
+            </div>
+                        <div class="code-line "
+                 id="src-line-24">
+                <span class="ln">24</span>
+                <span class="error-arrow">&nbsp;</span>
+                <span class="src" data-raw="    }"></span>
+            </div>
+                        <div class="code-line "
+                 id="src-line-25">
+                <span class="ln">25</span>
+                <span class="error-arrow">&nbsp;</span>
+                <span class="src" data-raw="}"></span>
+            </div>
+                    </div>
+
+        <!-- ARGS PANEL (shown when frame has args) -->
+        <div class="args-panel" id="argsPanel" style="display:none">
+            <div class="args-title">Arguments</div>
+            <div class="args-body" id="argsBody"></div>
+        </div>
+
+        <!-- INFO TABS -->
+        <div class="info-section">
+            <div class="tabs-bar">
+                <button class="tab-btn active" onclick="switchTab(this,'env')">Environment</button>
+                <button class="tab-btn" onclick="switchTab(this,'get')">GET</button>
+                <button class="tab-btn" onclick="switchTab(this,'post')">POST</button>
+                <button class="tab-btn" onclick="switchTab(this,'server')">Server</button>
+            </div>
+
+            <div class="tab-pane active" id="pane-env">
+                <div class="info-table-wrap">
+                    <table class="info-table">
+                        <tr><td>PHP Version</td><td>8.3.28</td></tr>
+                        <tr><td>LavaLust</td><td>4.6.0</td></tr>
+                        <tr><td>Environment</td><td>development</td></tr>
+                        <tr><td>Memory Used</td><td>2 MB</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="tab-pane" id="pane-get">
+                                    <div class="empty-note">No GET data.</div>
+                            </div>
+
+            <div class="tab-pane" id="pane-post">
+                                    <div class="empty-note">No POST data.</div>
+                            </div>
+
+            <div class="tab-pane" id="pane-server">
+                <div class="info-table-wrap">
+                    <table class="info-table">
+                                                <tr>
+                            <td>REQUEST_METHOD</td>
+                            <td>GET</td>
+                        </tr>
+                                                <tr>
+                            <td>REQUEST_URI</td>
+                            <td>/lavalust/student/profile</td>
+                        </tr>
+                                                <tr>
+                            <td>HTTP_HOST</td>
+                            <td>127.0.0.1</td>
+                        </tr>
+                                                <tr>
+                            <td>REMOTE_ADDR</td>
+                            <td>127.0.0.1</td>
+                        </tr>
+                                                <tr>
+                            <td>SERVER_SOFTWARE</td>
+                            <td>Apache/2.4.62 (Win64) OpenSSL/3.0.18 PHP/8.3.28</td>
+                        </tr>
+                                                <tr>
+                            <td>SERVER_PORT</td>
+                            <td>80</td>
+                        </tr>
+                                                <tr>
+                            <td>HTTP_USER_AGENT</td>
+                            <td>curl/8.13.0</td>
+                        </tr>
+                                            </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Frame data for JS -->
+<script nonce="">
+const FRAMES = [{"file":"C:\\laragon\\www\\lavalust\\app\\middlewares\\StudentMiddleware.php","line":22,"code":[{"n":12,"s":"    public function handle(Closure $next)"},{"n":13,"s":"    {"},{"n":14,"s":"        if (session_status() === PHP_SESSION_NONE) {"},{"n":15,"s":"            session_start();"},{"n":16,"s":"        }"},{"n":17,"s":""},{"n":18,"s":"        if (!empty($_SESSION['student_access']) && $_SESSION['student_access'] === true) {"},{"n":19,"s":"            return $next();"},{"n":20,"s":"        }"},{"n":21,"s":""},{"n":22,"s":"        redirect('student');"},{"n":23,"s":"        return;"},{"n":24,"s":"    }"},{"n":25,"s":"}"}],"args":""},{"file":"C:\\laragon\\www\\lavalust\\scheme\\kernel\\Middleware.php","line":99,"code":[{"n":89,"s":"     * @param string $middleware"},{"n":90,"s":"     * @param Closure $next"},{"n":91,"s":"     * @return mixed"},{"n":92,"s":"     */"},{"n":93,"s":"    protected function resolve($middleware, $next)"},{"n":94,"s":"    {"},{"n":95,"s":"        if (!isset($this->map[$middleware])) {"},{"n":96,"s":"            throw new Exception(\"Middleware [$middleware] not registered.\");"},{"n":97,"s":"        }"},{"n":98,"s":""},{"n":99,"s":"        return $this->map[$middleware]->handle($next);"},{"n":100,"s":"    }"},{"n":101,"s":"}"},{"n":102,"s":""}],"args":"Array\n(\n    [0] => Closure Object\n        (\n            [static] => Array\n                (\n                    [callback] => StudentController::profile\n                    [matches] => Array\n                        (\n                        )\n\n                )\n\n            [this] => Router Object\n                (\n                    [routes:Router:private] => Array\n                        (\n                            [0] => Array\n                                (\n                                    [url] => \n                                    [callback] => Welcome::index\n                                    [method] => GET\n                                    [name] => \n                                    [constraints] => Array\n                                        (\n                                        )\n\n                                    [middleware] => Array\n                                        (\n                                        )\n\n                                )\n\n                            [1] => Array\n                                (\n                                    [url] => /student\n                                    [callback] => StudentController::index\n                                    [method] => GET\n                                    [name] => \n                                    [constraints] => Array\n                                        (\n                                        )\n\n                                    [middleware] => Array\n                                        (\n                                        )\n\n                                )\n\n                            [2] => Array\n                                (\n                                    [url] => /student/profile\n                                    [callback] => StudentController::profile\n                                    [method] => GET\n                                    [name] => \n                                    [constraints] => Array\n                                        (\n                                        )\n\n                                    [middleware] => Array\n                                        (\n                                            [0] => student\n                                        )\n\n                                )\n\n                        )\n\n                    [group_middleware:Router:private] => Array\n                        (\n                        )\n\n                    [global_middleware:Router:private] => Array\n                        (\n                        )\n\n                    [group_prefix:Router:private] => \n                )\n\n        )\n\n)\n"},{"file":"C:\\laragon\\www\\lavalust\\scheme\\kernel\\Middleware.php","line":77,"code":[{"n":67,"s":"     * @param array $middlewares"},{"n":68,"s":"     * @param Closure $destination"},{"n":69,"s":"     * @return mixed"},{"n":70,"s":"     */"},{"n":71,"s":"    public function run(array $middlewares, Closure $destination)"},{"n":72,"s":"    {"},{"n":73,"s":"        $pipeline = array_reduce("},{"n":74,"s":"            array_reverse($middlewares),"},{"n":75,"s":"            function ($next, $middleware) {"},{"n":76,"s":"                return function () use ($middleware, $next) {"},{"n":77,"s":"                    return $this->resolve($middleware, $next);"},{"n":78,"s":"                };"},{"n":79,"s":"            },"},{"n":80,"s":"            $destination"},{"n":81,"s":"        );"},{"n":82,"s":""},{"n":83,"s":"        return $pipeline();"},{"n":84,"s":"    }"},{"n":85,"s":""},{"n":86,"s":"    /**"},{"n":87,"s":"     * Resolve a middleware"}],"args":"Array\n(\n    [0] => student\n    [1] => Closure Object\n        (\n            [static] => Array\n                (\n                    [callback] => StudentController::profile\n                    [matches] => Array\n                        (\n                        )\n\n                )\n\n            [this] => Router Object\n                (\n                    [routes:Router:private] => Array\n                        (\n                            [0] => Array\n                                (\n                                    [url] => \n                                    [callback] => Welcome::index\n                                    [method] => GET\n                                    [name] => \n                                    [constraints] => Array\n                                        (\n                                        )\n\n                                    [middleware] => Array\n                                        (\n                                        )\n\n                                )\n\n                            [1] => Array\n                                (\n                                    [url] => /student\n                                    [callback] => StudentController::index\n                                    [method] => GET\n                                    [name] => \n                                    [constraints] => Array\n                                        (\n                                        )\n\n                                    [middleware] => Array\n                                        (\n                                        )\n\n                                )\n\n                            [2] => Array\n                                (\n                                    [url] => /student/profile\n                                    [callback] => StudentController::profile\n                                    [method] => GET\n                                    [name] => \n                                    [constraints] => Array\n                                        (\n                                        )\n\n                                    [middleware] => Array\n                                        (\n                                            [0] => student\n                                        )\n\n                                )\n\n                        )\n\n                    [group_middleware:Router:private] => Array\n                        (\n                        )\n\n                    [global_middleware:Router:private] => Array\n                        (\n                        )\n\n                    [group_prefix:Router:private] => \n                )\n\n        )\n\n)\n"},{"file":"C:\\laragon\\www\\lavalust\\scheme\\kernel\\Middleware.php","line":83,"code":[{"n":73,"s":"        $pipeline = array_reduce("},{"n":74,"s":"            array_reverse($middlewares),"},{"n":75,"s":"            function ($next, $middleware) {"},{"n":76,"s":"                return function () use ($middleware, $next) {"},{"n":77,"s":"                    return $this->resolve($middleware, $next);"},{"n":78,"s":"                };"},{"n":79,"s":"            },"},{"n":80,"s":"            $destination"},{"n":81,"s":"        );"},{"n":82,"s":""},{"n":83,"s":"        return $pipeline();"},{"n":84,"s":"    }"},{"n":85,"s":""},{"n":86,"s":"    /**"},{"n":87,"s":"     * Resolve a middleware"},{"n":88,"s":"     *"},{"n":89,"s":"     * @param string $middleware"},{"n":90,"s":"     * @param Closure $next"},{"n":91,"s":"     * @return mixed"},{"n":92,"s":"     */"},{"n":93,"s":"    protected function resolve($middleware, $next)"}],"args":""},{"file":"C:\\laragon\\www\\lavalust\\scheme\\kernel\\Router.php","line":412,"code":[{"n":402,"s":"    {"},{"n":403,"s":"        $matches = [];"},{"n":404,"s":"        if (preg_match($this->convert_to_regex_pattern($route['url'], $route['constraints']), $url, $matches)) {"},{"n":405,"s":"            array_shift($matches);"},{"n":406,"s":""},{"n":407,"s":"            $callback    = $route['callback'];"},{"n":408,"s":"            $middlewares = $route['middleware'] ?? [];"},{"n":409,"s":""},{"n":410,"s":"            if (!empty($middlewares)) {"},{"n":411,"s":"                $runner = load_class('Middleware', 'kernel'); // make sure kernel middleware class exists"},{"n":412,"s":"                $runner->run($middlewares, function () use ($callback, $matches) {"},{"n":413,"s":"                    $this->call_controller_from_callback($callback, $matches);"},{"n":414,"s":"                });"},{"n":415,"s":"                return;"},{"n":416,"s":"            }"},{"n":417,"s":""},{"n":418,"s":"            $this->call_controller_from_callback($callback, $matches);"},{"n":419,"s":"        }"},{"n":420,"s":"    }"},{"n":421,"s":""},{"n":422,"s":""}],"args":"Array\n(\n    [0] => Array\n        (\n            [0] => student\n        )\n\n    [1] => Closure Object\n        (\n            [static] => Array\n                (\n                    [callback] => StudentController::profile\n                    [matches] => Array\n                        (\n                        )\n\n                )\n\n            [this] => Router Object\n                (\n                    [routes:Router:private] => Array\n                        (\n                            [0] => Array\n                                (\n                                    [url] => \n                                    [callback] => Welcome::index\n                                    [method] => GET\n                                    [name] => \n                                    [constraints] => Array\n                                        (\n                                        )\n\n                                    [middleware] => Array\n                                        (\n                                        )\n\n                                )\n\n                            [1] => Array\n                                (\n                                    [url] => /student\n                                    [callback] => StudentController::index\n                                    [method] => GET\n                                    [name] => \n                                    [constraints] => Array\n                                        (\n                                        )\n\n                                    [middleware] => Array\n                                        (\n                                        )\n\n                                )\n\n                            [2] => Array\n                                (\n                                    [url] => /student/profile\n                                    [callback] => StudentController::profile\n                                    [method] => GET\n                                    [name] => \n                                    [constraints] => Array\n                                        (\n                                        )\n\n                                    [middleware] => Array\n                                        (\n                                            [0] => student\n                                        )\n\n                                )\n\n                        )\n\n                    [group_middleware:Router:private] => Array\n                        (\n                        )\n\n                    [global_middleware:Router:private] => Array\n                        (\n                        )\n\n                    [group_prefix:Router:private] => \n                )\n\n        )\n\n)\n"},{"file":"C:\\laragon\\www\\lavalust\\scheme\\kernel\\Router.php","line":457,"code":[{"n":447,"s":"                if (defined('IS_CLI') && IS_CLI) {"},{"n":448,"s":"                    echo \"Error 400: Disallowed characters in command.\\n\";"},{"n":449,"s":"                    exit(1);"},{"n":450,"s":"                } else {"},{"n":451,"s":"                    show_error('400 Bad Request', 'The URI you submitted has disallowed characters.', 'error_general', 400);"},{"n":452,"s":"                }"},{"n":453,"s":"            }"},{"n":454,"s":"        }"},{"n":455,"s":"        foreach ($this->routes as $route) {"},{"n":456,"s":"            if (strtoupper($route['method']) === strtoupper($method) && $this->url_matches_route($url, $route)) {"},{"n":457,"s":"                $this->execute_callback($url, $route);"},{"n":458,"s":"                return;"},{"n":459,"s":"            }"},{"n":460,"s":"        }"},{"n":461,"s":"        empty(config_item('404_override')) ? show_404() : show_404('', '', config_item('404_override'));"},{"n":462,"s":"    }"},{"n":463,"s":""},{"n":464,"s":"    /**"},{"n":465,"s":"     * Add constraints to route parameters"},{"n":466,"s":"     *"},{"n":467,"s":"     * @param mixed $param"}],"args":"Array\n(\n    [0] => /student/profile\n    [1] => Array\n        (\n            [url] => /student/profile\n            [callback] => StudentController::profile\n            [method] => GET\n            [name] => \n            [constraints] => Array\n                (\n                )\n\n            [middleware] => Array\n                (\n                    [0] => student\n                )\n\n        )\n\n)\n"},{"file":"C:\\laragon\\www\\lavalust\\scheme\\kernel\\LavaLust.php","line":244,"code":[{"n":234,"s":""},{"n":235,"s":"    $method = 'GET';"},{"n":236,"s":""},{"n":237,"s":"} else {"},{"n":238,"s":"    $url = $router->sanitize_url(str_replace($_SERVER['SCRIPT_NAME'], '', $_SERVER['PHP_SELF']));"},{"n":239,"s":"    $method = isset($_SERVER['REQUEST_METHOD']) ? strtoupper($_SERVER['REQUEST_METHOD']) : 'GET';"},{"n":240,"s":"}"},{"n":241,"s":""},{"n":242,"s":"if (empty($url)) $url = '/';"},{"n":243,"s":""},{"n":244,"s":"$router->initiate($url, $method);"},{"n":245,"s":"?>"}],"args":"Array\n(\n    [0] => /student/profile\n    [1] => GET\n)\n"},{"file":"C:\\laragon\\www\\lavalust\\public\\index.php","line":86,"code":[{"n":76,"s":"define('ROOT_DIR',  dirname(__DIR__) . DIRECTORY_SEPARATOR);"},{"n":77,"s":"define('SYSTEM_DIR', ROOT_DIR . $system_path . DIRECTORY_SEPARATOR);"},{"n":78,"s":"define('APP_DIR', ROOT_DIR . $application_folder . DIRECTORY_SEPARATOR);"},{"n":79,"s":"define('PUBLIC_DIR', $public_folder);"},{"n":80,"s":""},{"n":81,"s":"/*"},{"n":82,"s":" * ------------------------------------------------------"},{"n":83,"s":" * Setup done? Then Hurray!"},{"n":84,"s":" * ------------------------------------------------------"},{"n":85,"s":" */"},{"n":86,"s":"require_once SYSTEM_DIR . 'kernel/LavaLust.php';"},{"n":87,"s":"?>"}],"args":"Array\n(\n    [0] => C:\\laragon\\www\\lavalust\\scheme\\kernel\\LavaLust.php\n)\n"}];
+
+function hl(src) {
+    // 1. HTML-escape raw source
+    src = src.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+    // 2. Extract strings + comments into frozen[], replace with safe placeholder
+    //    Placeholder: @@FROZEN_N@@ — cannot appear in PHP source code
+    const frozen = [];
+    let out = '', i = 0;
+    while (i < src.length) {
+        // // line comment
+        if (src[i]==='/' && src[i+1]==='/') {
+            let e = src.indexOf('\n', i); if (e===-1) e = src.length;
+            frozen.push('<span class="cmt">' + src.slice(i,e) + '</span>');
+            out += '@@FROZEN_'+(frozen.length-1)+'@@';
+            i = e; continue;
+        }
+        // # line comment
+        if (src[i]==='#') {
+            let e = src.indexOf('\n', i); if (e===-1) e = src.length;
+            frozen.push('<span class="cmt">' + src.slice(i,e) + '</span>');
+            out += '@@FROZEN_'+(frozen.length-1)+'@@';
+            i = e; continue;
+        }
+        // single-quoted string
+        if (src[i]==="'") {
+            let j = i+1;
+            while (j < src.length) {
+                if (src[j]==='\\') { j+=2; continue; }
+                if (src[j]==="'") { j++; break; }
+                j++;
+            }
+            frozen.push('<span class="str">' + src.slice(i,j) + '</span>');
+            out += '@@FROZEN_'+(frozen.length-1)+'@@';
+            i = j; continue;
+        }
+        // double-quoted string
+        if (src[i]==='"') {
+            let j = i+1;
+            while (j < src.length) {
+                if (src[j]==='\\') { j+=2; continue; }
+                if (src[j]==='"') { j++; break; }
+                j++;
+            }
+            frozen.push('<span class="str">' + src.slice(i,j) + '</span>');
+            out += '@@FROZEN_'+(frozen.length-1)+'@@';
+            i = j; continue;
+        }
+        out += src[i++];
+    }
+    src = out;
+
+    // 3. Highlight plain text — no HTML tags exist yet, placeholders are opaque
+    src = src.replace(/\b(function|class|public|protected|private|static|return|new|if|else|elseif|foreach|for|while|switch|case|default|break|continue|throw|try|catch|finally|require|require_once|include|include_once|namespace|use|extends|implements|abstract|interface|trait|echo|print|list|array|null|true|false|void|OR|AND)\b/g,
+        '<span class="kw">$1</span>');
+
+    src = src.replace(/(\$[a-zA-Z_][a-zA-Z0-9_]*)/g,
+        '<span class="var">$1</span>');
+
+    src = src.replace(/\b([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/g, function(m, name) {
+        if (/^(if|else|elseif|for|foreach|while|switch|catch|list|array|function)$/.test(name)) return m;
+        return '<span class="fn">' + name + '</span>(';
+    });
+
+    src = src.replace(/\b(\d+\.?\d*)\b/g, '<span class="num">$1</span>');
+
+    // 4. Restore frozen tokens
+    src = src.replace(/@@FROZEN_(\d+)@@/g, (_, n) => frozen[+n]);
+
+    return src;
+}
+
+function renderCode(frameIdx) {
+    const f = FRAMES[frameIdx];
+    document.getElementById('codeFilePath').textContent = f.file || '[internal]';
+    document.getElementById('codeLineBadge').textContent = f.line ? 'line ' + f.line : '';
+
+    const view = document.getElementById('codeView');
+    view.innerHTML = f.code.map(row => {
+        const isErr = row.n === f.line;
+        return '<div class="code-line' + (isErr ? ' error-line' : '') + '">' +
+            '<span class="ln">' + row.n + '</span>' +
+            '<span class="error-arrow">' + (isErr ? '&#9654;' : '&nbsp;') + '</span>' +
+            '<span class="src">' + hl(row.s) + '</span>' +
+            '</div>';
+    }).join('');
+
+    const errLine = view.querySelector('.error-line');
+    if (errLine) errLine.scrollIntoView({ block: 'center' });
+
+    const argsPanel = document.getElementById('argsPanel');
+    const argsBody  = document.getElementById('argsBody');
+    if (f.args) {
+        argsBody.textContent = f.args;
+        argsPanel.style.display = 'block';
+    } else {
+        argsPanel.style.display = 'none';
+    }
+}
+
+function activateFrame(idx) {
+    document.querySelectorAll('.trace-item').forEach((el, i) => {
+        el.classList.toggle('active', i === idx);
+    });
+    renderCode(idx);
+}
+
+function switchTab(btn, id) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('pane-' + id).classList.add('active');
+}
+
+// Initial render: highlight inline PHP-rendered code
+document.querySelectorAll('.src[data-raw]').forEach(el => {
+    el.innerHTML = hl(el.getAttribute('data-raw'));
+    el.removeAttribute('data-raw');
+});
+
+// Scroll error line into view on load
+const initErr = document.querySelector('.code-line.error-line');
+if (initErr) initErr.scrollIntoView({ block: 'center' });
+</script>
+</body>
+</html>
