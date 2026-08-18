@@ -79,7 +79,11 @@ $config['environment'] = getenv('APP_ENV') ?: 'development';
 | WARNING: You MUST set this value!
 |
 */
-$config['base_url'] 				= 'http://127.0.0.1/lavalust/';
+// Dynamically set base_url based on the server
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? 'https://' : 'http://';
+$host = $_SERVER['HTTP_HOST'];
+$base_path = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false) ? '/lavalust/' : '/';
+$config['base_url'] = $protocol . $host . $base_path;
 
 /*
 |--------------------------------------------------------------------------

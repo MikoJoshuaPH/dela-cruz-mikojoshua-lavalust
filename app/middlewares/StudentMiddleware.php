@@ -22,7 +22,8 @@ class StudentMiddleware
         $message = 'Access denied. Please open the student page first to continue to the profile.';
         $_SESSION['redirect_message'] = $message;
 
-        $redirect_url = '/lavalust/student?message=' . urlencode($message);
+        // Use relative path that works on both local and production
+        $redirect_url = '/student?message=' . urlencode($message);
         header('Location: ' . $redirect_url);
         exit();
     }
