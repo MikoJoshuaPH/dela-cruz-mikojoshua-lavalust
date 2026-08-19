@@ -1,13 +1,7 @@
 <?php
 defined('PREVENT_DIRECT_ACCESS') OR exit('No direct script access allowed');
 ?>
-<!--
-	NOTE FOR INTEGRATION:
-	This view is included inside your existing layout, which owns <head>/<title>.
-	Personalized title to set there:
 
-		Miko Joshua Dela Cruz — 3F1 Mayor & IT Student | Access Terminal
--->
 <style>
 	:root{
 		--bg:#0a0f1c;
@@ -355,7 +349,7 @@ defined('PREVENT_DIRECT_ACCESS') OR exit('No direct script access allowed');
 				<span class="stp-console-timestamp">student/home</span>
 			</div>
 			<div class="stp-console-body">
-				<p class="stp-console-line"><?php echo isset($message) ? htmlspecialchars($message) : 'Welcome to the student page.'; ?><span class="stp-cursor"></span></p>
+				<p class="stp-console-line">Welcome to the student page.<span class="stp-cursor"></span></p>
 			</div>
 		</div>
 	</div>

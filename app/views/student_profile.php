@@ -1,16 +1,7 @@
 <?php
 defined('PREVENT_DIRECT_ACCESS') OR exit('No direct script access allowed');
 ?>
-<!--
-	NOTE FOR INTEGRATION:
-	This view is included inside your existing layout, which owns <head>/<title>.
-	If your layout sets a page title variable, use this personalized one:
 
-		Miko Joshua Dela Cruz — 3F1 Mayor & IT Student | Access Terminal
-
-	The on-page hero below also carries the personalized identity visually,
-	so the page reads correctly even if the <title> tag isn't updated.
--->
 <style>
 	:root{
 		--bg:#0a0f1c;
@@ -385,14 +376,14 @@ defined('PREVENT_DIRECT_ACCESS') OR exit('No direct script access allowed');
 
 	<header class="sp-hero">
 		<div class="sp-hero-top">
-			<span class="sp-id-tag">ID · MCC2024-00043</span>
-			<span class="sp-status"><span class="sp-status-dot"></span>Access Granted</span>
+			<span class="sp-id-tag">ID · <?= htmlspecialchars($student_id) ?></span>
+			<span class="sp-status"><span class="sp-status-dot"></span><?= htmlspecialchars($status) ?></span>
 		</div>
 		<div class="sp-hero-main">
-			<div class="sp-avatar">MJ</div>
+			<div class="sp-avatar"><?= htmlspecialchars($avatar_initials) ?></div>
 			<div class="sp-hero-name">
-				<h1>Dela Cruz, Miko Joshua Austria</h1>
-				<div class="sp-hero-role">3F1 Mayor <span>·</span> IT Student <span>·</span> SY 2026&ndash;2027</div>
+				<h1><?= htmlspecialchars($name) ?></h1>
+				<div class="sp-hero-role"><?= htmlspecialchars($section) ?> Mayor <span>·</span> IT Student <span>·</span> SY 2026&ndash;2027</div>
 			</div>
 		</div>
 	</header>
@@ -411,23 +402,27 @@ defined('PREVENT_DIRECT_ACCESS') OR exit('No direct script access allowed');
 		<div class="sp-info-grid">
 			<div class="sp-info-item">
 				<div class="sp-info-label">Student ID</div>
-				<div class="sp-info-value">MCC2024-00043</div>
+				<div class="sp-info-value"><?= htmlspecialchars($student_id) ?></div>
 			</div>
 			<div class="sp-info-item">
 				<div class="sp-info-label">Course &amp; Section</div>
-				<div class="sp-info-value">3F1</div>
+				<div class="sp-info-value"><?= htmlspecialchars($section) ?></div>
 			</div>
 			<div class="sp-info-item sp-span-2">
 				<div class="sp-info-label">Full Name</div>
-				<div class="sp-info-value">Dela Cruz, Miko Joshua Austria</div>
+				<div class="sp-info-value"><?= htmlspecialchars($name) ?></div>
 			</div>
 			<div class="sp-info-item sp-span-2">
 				<div class="sp-info-label">Address</div>
-				<div class="sp-info-value">Brgy. Tawagan, Calapan City, Oriental Mindoro</div>
+				<div class="sp-info-value"><?= htmlspecialchars($address) ?></div>
 			</div>
 			<div class="sp-info-item sp-span-2">
 				<div class="sp-info-label">Contact Number</div>
-				<div class="sp-info-value">0981 222 7628</div>
+				<div class="sp-info-value"><?= htmlspecialchars($contact) ?></div>
+			</div>
+			<div class="sp-info-item sp-span-2">
+				<div class="sp-info-label">Email</div>
+				<div class="sp-info-value"><?= htmlspecialchars($email) ?></div>
 			</div>
 		</div>
 	</section>

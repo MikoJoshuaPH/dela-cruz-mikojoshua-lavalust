@@ -9,16 +9,27 @@ class StudentController extends Controller {
 
         $_SESSION['student_access'] = true;
 
-        $message = $_GET['message'] ?? ($_SESSION['redirect_message'] ?? 'Welcome to the student page.');
-        unset($_SESSION['redirect_message']);
-
         // Display student page
-        $this->call->view('student_page', ['message' => $message]);
+        $this->call->view('student_page');
     }
 
     public function profile() {
-        // Display student profile
-        $this->call->view('student_profile');
+        // Create student associative array
+        $student = [
+            'student_id'    => 'MCC2024-00043',
+            'name'          => 'Dela Cruz, Miko Joshua Austria',
+            'course'        => 'BS Information Technology',
+            'year'          => '3rd Year',
+            'section'       => 'F1',
+            'email'         => 'mikojoshuaph@gmail.com',
+            'contact'       => '0981 222 7628',
+            'address'       => 'Brgy. Tawagan, Calapan City, Oriental Mindoro',
+            'status'        => 'Access Granted',
+            'avatar_initials' => 'MJ'
+        ];
+
+        // Display student profile with data
+        $this->call->view('student_profile', $student);
     }
 }
 ?>

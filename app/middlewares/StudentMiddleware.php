@@ -19,12 +19,8 @@ class StudentMiddleware
             return $next();
         }
 
-        $message = 'Access denied. Please open the student page first to continue to the profile.';
-        $_SESSION['redirect_message'] = $message;
-
-        // Use relative path that works on both local and production
-        $redirect_url = '/student?message=' . urlencode($message);
-        header('Location: ' . $redirect_url);
+        // Display forbidden page if accessing student profile without proper access
+        include APP_DIR . 'views/errors/error_forbidden.php';
         exit();
     }
 }
