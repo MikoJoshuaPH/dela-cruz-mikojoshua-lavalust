@@ -68,6 +68,15 @@ $config['environment'] = getenv('APP_ENV') ?: 'development';
 
 /*
 |--------------------------------------------------------------------------
+| Default Timezone
+|--------------------------------------------------------------------------
+| The default timezone will be used by the date functions of PHP.
+|
+*/
+$config['date_default_timezone'] = 'Asia/Manila';
+
+/*
+|--------------------------------------------------------------------------
 | Base Site URL
 |--------------------------------------------------------------------------
 |
@@ -79,10 +88,7 @@ $config['environment'] = getenv('APP_ENV') ?: 'development';
 | WARNING: You MUST set this value!
 |
 */
-// Dynamically set base_url based on the server.
-$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? 'https://' : 'http://';
-$host = $_SERVER['HTTP_HOST'];
-$config['base_url'] = $protocol . $host . '/';
+$config['base_url'] 				= '';
 
 /*
 |--------------------------------------------------------------------------
@@ -93,16 +99,6 @@ $config['base_url'] = $protocol . $host . '/';
 |
 */
 $config['proxy_enabled']           = FALSE;
-/*
-|--------------------------------------------------------------------------
-| Index File
-|--------------------------------------------------------------------------
-|
-| If you are using mod_rewrite to remove index.php in the URL set this
-| variable to blank.
-|
-*/
-$config['index_page']               = '';
 
 /*
 |--------------------------------------------------------------------------
@@ -220,8 +216,6 @@ $config['language'] 				= 'en-US';
 |
 */
 $config['subclass_prefix']          = 'MY_';
-
-require_once APP_DIR . 'config/middleware.php';
 
 /*
 |--------------------------------------------------------------------------
